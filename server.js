@@ -41,7 +41,7 @@ function getImageNames(callback) {
  */
 function imageNamesToTags(fileNames) {
   return fileNames.map(function(fileName) {
-    return `<img src="${fileName}" alt="${fileName}">`;
+    return `<div class="item"><img class="item-image" src="${fileName}" alt="${fileName}"></div>`;
   });
 }
 
