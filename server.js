@@ -16,9 +16,9 @@ var port = 3000;
 /* load cached files */
 var config = JSON.parse(fs.readFileSync('config.json'));
 var stylesheet = fs.readFileSync('public/gallery.css');
-var script = fs.readFileSync('public/gallery.js');
 
 template.loadDir('templates');
+
 
 /** @function serveGallery
  * A function to serve a HTML page representing a
@@ -27,8 +27,7 @@ template.loadDir('templates');
  * @param {http.serverResponse} res - the response object
  */
 function serveGallery(req, res) {
-  // getImageNames(function(err, imageNames) {
-  getItemInfo(function(err, jsonFiles) {
+  getCatalogData(function(err, jsonFiles) {
     if (err) {
       console.error(err);
       res.statusCode = 500;
@@ -37,30 +36,18 @@ function serveGallery(req, res) {
       return;
     }
     res.setHeader('Content-Type', 'text/html');
-    // res.end(buildGallery(imageNames));
     res.end(buildGallery(jsonFiles));
   });
 }
 
-// /** @function getImageNames
-//  * Retrieves the filenames for all images in the
-//  * /images directory and supplies them to the callback.
-//  * @param {function} callback - function that takes an
-//  * error and array of filenames as parameters
-//  */
-// function getImageNames(callback) {
-//   fs.readdir('images/', function(err, fileNames){
-//     if(err) callback(err, undefined);
-//     else callback(false, fileNames);
-//   });
-// }
-/** @function getItemInfo
+
+/** @function getCatalogData
  * Retrieves all the item metadata within the /catalog
  * directory and supplies them to the callback.
  * @param {function} callback - function that takes an
  * error and array of filenames as parameters
  */
-function getItemInfo(callback) {
+function getCatalogData(callback) {
   fs.readdir('catalog/', function(err, jsonFiles) {
     if (err) callback(err, undefined);
     else callback(false, jsonFiles);
@@ -83,10 +70,10 @@ function buildGallery(jsonFiles) {
 
   return template.render('gallery.html', {
     title: config.title,
-    // imageTags: imageNamesToTags(imageTags).join('')
     imageTags: imageNamesToTags(items).join('')
   });
 }
+
 
 /** @function imageNamesToTags
  * Helper function that takes an array of image
@@ -97,11 +84,39 @@ function buildGallery(jsonFiles) {
  */
 function imageNamesToTags(jsonData) {
   return jsonData.map(function(item) {
-    return `<a href="#">
+    return `<a href="${item.id}.json">
               <img class="item-image" src="${item.image}" alt="${item.image}">
             </a>`;
   });
 }
+
+
+/** @function serveDetailedPage
+ * A function to serve a HTML page with detailed item info.
+ * @param {http.incomingRequest} req - the request object
+ * @param {http.serverResponse} res - the response object
+ * @param {string} itemId - the item's id
+ */
+function serveDetailedPage(item, req, res) {
+  var jsonItem = JSON.parse(fs.readFileSync('catalog/' + decodeURIComponent(item)));
+  res.setHeader('Content-Type', 'text/html');
+  res.end(buildDetailedPage(jsonItem));
+}
+
+/**
+ * @function buildDetailedPage
+ * A helper function to build an HTML string
+ * of a gallery webpage.
+ * @param {json} jsonItem - the metadata for a particular item.
+ */
+function buildDetailedPage(jsonItem) {
+  return template.render('detailedPage.html', {
+    name: jsonItem.name,
+    description: jsonItem.description,
+    imageTag: `<img class="item-image" src="${jsonItem.image}" alt="${jsonItem.image}">`
+  });
+}
+
 
 /** @function uploadImage
  * A function to process an http POST request
@@ -132,6 +147,7 @@ function uploadImage(req, res) {
   });
 }
 
+
 /** @function serveImage
  * A function to serve an image file.
  * @param {string} filename - the filename of the image
@@ -152,6 +168,7 @@ function serveImage(fileName, req, res) {
     res.end(data);
   });
 }
+
 
 /** @function handleRequest
  * A function to determine what to do with
@@ -175,21 +192,19 @@ function handleRequest(req, res) {
   switch(urlParts.pathname) {
     case '/':
     case '/gallery':
-      if(req.method == 'GET') serveGallery(req, res);
-      else if(req.method == 'POST') uploadImage(req, res);
+      if (req.method == 'GET') serveGallery(req, res);
+      else if (req.method == 'POST') uploadImage(req, res);
       break;
     case '/gallery.css':
       res.setHeader('Content-Type', 'text/css');
       res.end(stylesheet);
       break;
-    case '/gallery.js':
-      res.setHeader('Content-Type', 'text/javascript');
-      res.end(script);
-      break;
     default:
-      serveImage(req.url, req, res);
+      if (req.url.includes('.json')) serveDetailedPage(req.url, req, res);
+      else if (req.url.includes('.jpg')) serveImage(req.url, req, res);
   }
 }
+
 
 /* Create and launch the webserver */
 var server = http.createServer(handleRequest);

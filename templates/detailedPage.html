@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Simple Catalog</title>
+    <!-- <title><%= context.title %></title> -->
+    <link href="gallery.css" rel="stylesheet" type="text/css">
+  </head>
+  <body>
+    <div class="container">
+      <header style="text-align:center;">
+        <h1><%= context.name %></h1>
+      </header>
+      <main>
+        <%= context.imageTag %>
+        <p><%= context.description %></p>
+      </main>
+    </div>
+  </body>
+</html>
