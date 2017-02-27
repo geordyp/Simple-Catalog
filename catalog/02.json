@@ -1,4 +1,5 @@
 {
   "name":"thing2",
-  "description": "good thing2"
+  "image":"thing2-pic.jpg",
+  "description":"good thing2"
 }

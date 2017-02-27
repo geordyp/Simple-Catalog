@@ -15,20 +15,76 @@ var port = 3000;
 
 /* load cached files */
 var config = JSON.parse(fs.readFileSync('config.json'));
-var stylesheet = fs.readFileSync('gallery.css');
+var stylesheet = fs.readFileSync('public/gallery.css');
+var script = fs.readFileSync('public/gallery.js');
 
 template.loadDir('templates');
 
-/** @function getImageNames
- * Retrieves the filenames for all images in the
- * /images directory and supplies them to the callback.
+/** @function serveGallery
+ * A function to serve a HTML page representing a
+ * gallery of images.
+ * @param {http.incomingRequest} req - the request object
+ * @param {http.serverResponse} res - the response object
+ */
+function serveGallery(req, res) {
+  // getImageNames(function(err, imageNames) {
+  getItemInfo(function(err, jsonFiles) {
+    if (err) {
+      console.error(err);
+      res.statusCode = 500;
+      res.statusMessage = 'Server error';
+      res.end();
+      return;
+    }
+    res.setHeader('Content-Type', 'text/html');
+    // res.end(buildGallery(imageNames));
+    res.end(buildGallery(jsonFiles));
+  });
+}
+
+// /** @function getImageNames
+//  * Retrieves the filenames for all images in the
+//  * /images directory and supplies them to the callback.
+//  * @param {function} callback - function that takes an
+//  * error and array of filenames as parameters
+//  */
+// function getImageNames(callback) {
+//   fs.readdir('images/', function(err, fileNames){
+//     if(err) callback(err, undefined);
+//     else callback(false, fileNames);
+//   });
+// }
+/** @function getItemInfo
+ * Retrieves all the item metadata within the /catalog
+ * directory and supplies them to the callback.
  * @param {function} callback - function that takes an
  * error and array of filenames as parameters
  */
-function getImageNames(callback) {
-  fs.readdir('images/', function(err, fileNames){
-    if(err) callback(err, undefined);
-    else callback(false, fileNames);
+function getItemInfo(callback) {
+  fs.readdir('catalog/', function(err, jsonFiles) {
+    if (err) callback(err, undefined);
+    else callback(false, jsonFiles);
+  });
+}
+
+
+/**
+ * @function buildGallery
+ * A helper function to build an HTML string
+ * of a gallery webpage.
+ * @param {string[]} imageTags - the HTML for the individual
+ * gallery images.
+ */
+function buildGallery(jsonFiles) {
+  var items = [];
+  jsonFiles.forEach(function(jsonFile) {
+    items.push(JSON.parse(fs.readFileSync('catalog/' + jsonFile)));
+  });
+
+  return template.render('gallery.html', {
+    title: config.title,
+    // imageTags: imageNamesToTags(imageTags).join('')
+    imageTags: imageNamesToTags(items).join('')
   });
 }
 
@@ -39,64 +95,11 @@ function getImageNames(callback) {
  * @param {string[]} filenames - the image filenames
  * @return {string[]} an array of HTML img tags
  */
-function imageNamesToTags(fileNames) {
-  return fileNames.map(function(fileName) {
-    return `<a href="#"><img class="item-image" src="${fileName}" alt="${fileName}"></a>`;
-  });
-}
-
-/**
- * @function buildGallery
- * A helper function to build an HTML string
- * of a gallery webpage.
- * @param {string[]} imageTags - the HTML for the individual
- * gallery images.
- */
-function buildGallery(imageTags) {
-  return template.render('gallery.html', {
-    title: config.title,
-    imageTags: imageNamesToTags(imageTags).join('')
-  });
-}
-
-/** @function serveGallery
- * A function to serve a HTML page representing a
- * gallery of images.
- * @param {http.incomingRequest} req - the request object
- * @param {http.serverResponse} res - the response object
- */
-function serveGallery(req, res) {
-  getImageNames(function(err, imageNames){
-    if(err) {
-      console.error(err);
-      res.statusCode = 500;
-      res.statusMessage = 'Server error';
-      res.end();
-      return;
-    }
-    res.setHeader('Content-Type', 'text/html');
-    res.end(buildGallery(imageNames));
-  });
-}
-
-/** @function serveImage
- * A function to serve an image file.
- * @param {string} filename - the filename of the image
- * to serve.
- * @param {http.incomingRequest} - the request object
- * @param {http.serverResponse} - the response object
- */
-function serveImage(fileName, req, res) {
-  fs.readFile('images/' + decodeURIComponent(fileName), function(err, data){
-    if(err) {
-      console.error(err);
-      res.statusCode = 404;
-      res.statusMessage = "Resource not found";
-      res.end();
-      return;
-    }
-    res.setHeader('Content-Type', 'image/*');
-    res.end(data);
+function imageNamesToTags(jsonData) {
+  return jsonData.map(function(item) {
+    return `<a href="#">
+              <img class="item-image" src="${item.image}" alt="${item.image}">
+            </a>`;
   });
 }
 
@@ -129,6 +132,27 @@ function uploadImage(req, res) {
   });
 }
 
+/** @function serveImage
+ * A function to serve an image file.
+ * @param {string} filename - the filename of the image
+ * to serve.
+ * @param {http.incomingRequest} - the request object
+ * @param {http.serverResponse} - the response object
+ */
+function serveImage(fileName, req, res) {
+  fs.readFile('images/' + decodeURIComponent(fileName), function(err, data){
+    if(err) {
+      console.error(err);
+      res.statusCode = 404;
+      res.statusMessage = "Resource not found";
+      res.end();
+      return;
+    }
+    res.setHeader('Content-Type', 'image/*');
+    res.end(data);
+  });
+}
+
 /** @function handleRequest
  * A function to determine what to do with
  * incoming http requests.
@@ -151,15 +175,16 @@ function handleRequest(req, res) {
   switch(urlParts.pathname) {
     case '/':
     case '/gallery':
-      if(req.method == 'GET') {
-        serveGallery(req, res);
-      } else if(req.method == 'POST') {
-        uploadImage(req, res);
-      }
+      if(req.method == 'GET') serveGallery(req, res);
+      else if(req.method == 'POST') uploadImage(req, res);
       break;
     case '/gallery.css':
       res.setHeader('Content-Type', 'text/css');
       res.end(stylesheet);
+      break;
+    case '/gallery.js':
+      res.setHeader('Content-Type', 'text/javascript');
+      res.end(script);
       break;
     default:
       serveImage(req.url, req, res);
@@ -168,6 +193,6 @@ function handleRequest(req, res) {
 
 /* Create and launch the webserver */
 var server = http.createServer(handleRequest);
-server.listen(port, function(){
+server.listen(port, function() {
   console.log("Server is listening on port ", port);
 });
