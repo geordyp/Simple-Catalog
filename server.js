@@ -213,7 +213,6 @@ function handleRequest(req, res) {
   }
 
   switch(urlParts.pathname) {
-    case '/':
     case '/gallery':
       serveGallery(req, res);
       break;
