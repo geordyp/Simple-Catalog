@@ -1,6 +1,7 @@
 body {
   padding: 0;
   margin: 0;
+  background-color: #c6edff;
 }
 
 img {
@@ -8,9 +9,12 @@ img {
 }
 
 form {
-  background-color: lightblue;
-  border: 3px solid black;
+  border: 1px solid grey;
   padding: 30px;
+}
+
+a {
+  text-decoration: none;
 }
 
 .container {

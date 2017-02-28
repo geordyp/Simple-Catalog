@@ -2,7 +2,6 @@
 <html>
   <head>
     <title>Simple Catalog</title>
-    <!-- <title><%= context.title %></title> -->
     <link href="gallery.css" rel="stylesheet" type="text/css">
   </head>
   <body>
@@ -12,20 +11,9 @@
         <p><a href="upload">Upload Item</a></p>
       </header>
       <main>
-      <!-- <h1><%= context.title %></h1> -->
-      <!-- <form method="GET" action="">
-        <input type="text" name="title">
-        <input type="submit" value="Change Gallery Title">
-      </form> -->
-
-      <div class="item-list">
-        <%= context.imageTags %>
-      </div>
-
-      <!-- <form action="" method="POST" enctype="multipart/form-data">
-        <input type="file" name="image">
-        <input type="submit" value="Upload Image">
-      </form> -->
+        <div class="item-list">
+          <%= context.imageTags %>
+        </div>
       </main>
     </div>
   </body>
