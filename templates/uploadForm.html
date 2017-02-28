@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Simple Catalog</title>
+    <link href="gallery.css" rel="stylesheet" type="text/css">
+  </head>
+  <body>
+    <div class="container">
+      <header style="text-align:center;">
+        <p><a href="gallery">Back</a></p>
+        <h1>Simple Catalog</h1>
+      </header>
+      <main>
+        <h3>Add an Item to The Simple Catalog</h3>
+        <form action="" method="POST" enctype="multipart/form-data">
+          <label for="itemName">Name:
+            <input type="text" name="itemName">
+          </label>
+          <br><br>
+
+          <label for="itemDescription">Description:
+            <input type="text" name="itemDescription">
+          </label>
+          <br><br>
+
+          <label for="itemImage">Image:
+            <input type="file" name="itemImage">
+          </label>
+          <br><br><br>
+
+          <input type="submit" value="Upload Item">
+        </form>
+      </main>
+    </div>
+  </body>
+</html>

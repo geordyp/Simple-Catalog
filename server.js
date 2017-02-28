@@ -41,6 +41,18 @@ function serveGallery(req, res) {
 }
 
 
+/** @function serveUploadForm
+ * A function to serve a HTML page representing a
+ * gallery of images.
+ * @param {http.incomingRequest} req - the request object
+ * @param {http.serverResponse} res - the response object
+ */
+function serveUploadForm(req, res) {
+  res.setHeader('Content-Type', 'text/html');
+  res.end(template.render('uploadForm.html'));
+}
+
+
 /** @function getCatalogData
  * Retrieves all the item metadata within the /catalog
  * directory and supplies them to the callback.
@@ -118,23 +130,24 @@ function buildDetailedPage(jsonItem) {
 }
 
 
-/** @function uploadImage
+/** @function uploadItem
  * A function to process an http POST request
  * containing an image to add to the gallery.
  * @param {http.incomingRequest} req - the request object
  * @param {http.serverResponse} res - the response object
  */
-function uploadImage(req, res) {
+function uploadItem(req, res) {
   multipart(req, res, function(req, res) {
     // make sure an image was uploaded
-    if(!req.body.image.filename) {
+    if(!req.body.itemImage.filename) {
       console.error("No file in upload");
       res.statusCode = 400;
       res.statusMessage = "No file specified"
       res.end("No file specified");
       return;
     }
-    fs.writeFile('images/' + req.body.image.filename, req.body.image.data, function(err){
+
+    fs.writeFile('images/' + req.body.itemImage.filename, req.body.itemImage.data, function(err){
       if(err) {
         console.error(err);
         res.statusCode = 500;
@@ -142,6 +155,16 @@ function uploadImage(req, res) {
         res.end("Server Error");
         return;
       }
+      config.itemCount = parseInt(config.itemCount) + 1;
+
+      var newItem = {
+        "id":config.itemCount,
+        "name":req.body.itemName,
+        "description":req.body.itemDescription,
+        "image":req.body.itemImage.filename
+      };
+      fs.writeFile('config.json', JSON.stringify(config));
+      fs.writeFile('catalog/' + config.itemCount + '.json', JSON.stringify(newItem));
       serveGallery(req, res);
     });
   });
@@ -192,15 +215,20 @@ function handleRequest(req, res) {
   switch(urlParts.pathname) {
     case '/':
     case '/gallery':
-      if (req.method == 'GET') serveGallery(req, res);
-      else if (req.method == 'POST') uploadImage(req, res);
+      serveGallery(req, res);
+      break;
+    case '/upload':
+      if (req.method == 'GET') serveUploadForm(req, res);
+      else if (req.method == 'POST') uploadItem(req, res);
       break;
     case '/gallery.css':
       res.setHeader('Content-Type', 'text/css');
       res.end(stylesheet);
       break;
     default:
-      if (req.url.includes('.jpg')) serveImage(req.url, req, res);
+      if (req.url.includes('.jpg') || req.url.includes('.JPG') ||
+          req.url.includes('.jpeg') || req.url.includes('.JPEG') ||
+          req.url.includes('.png')) serveImage(req.url, req, res);
       else serveDetailedPage(req.url, req, res);
   }
 }
