@@ -84,7 +84,7 @@ function buildGallery(jsonFiles) {
  */
 function imageNamesToTags(jsonData) {
   return jsonData.map(function(item) {
-    return `<a href="${item.id}.json">
+    return `<a href="${item.id}">
               <img class="item-image" src="${item.image}" alt="${item.image}">
             </a>`;
   });
@@ -98,7 +98,7 @@ function imageNamesToTags(jsonData) {
  * @param {string} itemId - the item's id
  */
 function serveDetailedPage(item, req, res) {
-  var jsonItem = JSON.parse(fs.readFileSync('catalog/' + decodeURIComponent(item)));
+  var jsonItem = JSON.parse(fs.readFileSync('catalog/' + decodeURIComponent(item + '.json')));
   res.setHeader('Content-Type', 'text/html');
   res.end(buildDetailedPage(jsonItem));
 }
@@ -200,8 +200,8 @@ function handleRequest(req, res) {
       res.end(stylesheet);
       break;
     default:
-      if (req.url.includes('.json')) serveDetailedPage(req.url, req, res);
-      else if (req.url.includes('.jpg')) serveImage(req.url, req, res);
+      if (req.url.includes('.jpg')) serveImage(req.url, req, res);
+      else serveDetailedPage(req.url, req, res);
   }
 }
 
