@@ -1,7 +1,7 @@
 /**
  * server.js
  * This file defines the server for a
- * simple photo gallery web app.
+ * simple catalog web app.
  */
 "use strict;"
 
@@ -15,18 +15,18 @@ var port = 3000;
 
 /* load cached files */
 var config = JSON.parse(fs.readFileSync('config.json'));
-var stylesheet = fs.readFileSync('public/gallery.css');
+var stylesheet = fs.readFileSync('public/catalog.css');
 
 template.loadDir('templates');
 
 
-/** @function serveGallery
+/** @function serveCatalog
  * A function to serve a HTML page representing a
- * gallery of images.
+ * simple catalog of items.
  * @param {http.incomingRequest} req - the request object
  * @param {http.serverResponse} res - the response object
  */
-function serveGallery(req, res) {
+function serveCatalog(req, res) {
   getCatalogData(function(err, jsonFiles) {
     if (err) {
       console.error(err);
@@ -36,14 +36,13 @@ function serveGallery(req, res) {
       return;
     }
     res.setHeader('Content-Type', 'text/html');
-    res.end(buildGallery(jsonFiles));
+    res.end(buildCatalog(jsonFiles));
   });
 }
 
 
 /** @function serveUploadForm
- * A function to serve a HTML page representing a
- * gallery of images.
+ * A function to serve a form for adding to the catalog.
  * @param {http.incomingRequest} req - the request object
  * @param {http.serverResponse} res - the response object
  */
@@ -68,19 +67,17 @@ function getCatalogData(callback) {
 
 
 /**
- * @function buildGallery
- * A helper function to build an HTML string
- * of a gallery webpage.
- * @param {string[]} imageTags - the HTML for the individual
- * gallery images.
+ * @function buildCatalog
+ * A helper function to build an HTML string of a catalog webpage.
+ * @param {string[]} jsonFiles - the catalog data
  */
-function buildGallery(jsonFiles) {
+function buildCatalog(jsonFiles) {
   var items = [];
   jsonFiles.forEach(function(jsonFile) {
     items.push(JSON.parse(fs.readFileSync('catalog/' + jsonFile)));
   });
 
-  return template.render('gallery.html', {
+  return template.render('catalog.html', {
     title: config.title,
     imageTags: imageNamesToTags(items).join('')
   });
@@ -88,10 +85,10 @@ function buildGallery(jsonFiles) {
 
 
 /** @function imageNamesToTags
- * Helper function that takes an array of image
- * filenames, and returns an array of HTML img
+ * Helper function that takes an array of item data
+ * and returns an array of HTML img
  * tags build using those names.
- * @param {string[]} filenames - the image filenames
+ * @param {string[]} jsonData - the catalog data
  * @return {string[]} an array of HTML img tags
  */
 function imageNamesToTags(jsonData) {
@@ -118,7 +115,7 @@ function serveDetailedPage(item, req, res) {
 /**
  * @function buildDetailedPage
  * A helper function to build an HTML string
- * of a gallery webpage.
+ * of a detailed item webpage.
  * @param {json} jsonItem - the metadata for a particular item.
  */
 function buildDetailedPage(jsonItem) {
@@ -165,7 +162,7 @@ function uploadItem(req, res) {
       };
       fs.writeFile('config.json', JSON.stringify(config));
       fs.writeFile('catalog/' + config.itemCount + '.json', JSON.stringify(newItem));
-      serveGallery(req, res);
+      serveCatalog(req, res);
     });
   });
 }
@@ -200,34 +197,26 @@ function serveImage(fileName, req, res) {
  * @param {http.serverResponse} res - the response object
  */
 function handleRequest(req, res) {
-  // at most, the url should have two parts -
-  // a resource and a querystring separated by a ?
   var urlParts = url.parse(req.url);
 
-  if(urlParts.query){
-    var matches = /title=(.+)($|&)/.exec(urlParts.query);
-    if(matches && matches[1]){
-      config.title = decodeURIComponent(matches[1]);
-      fs.writeFile('config.json', JSON.stringify(config));
-    }
-  }
-
   switch(urlParts.pathname) {
-    case '/gallery':
-      serveGallery(req, res);
+    case '/catalog':
+      serveCatalog(req, res);
       break;
     case '/upload':
       if (req.method == 'GET') serveUploadForm(req, res);
       else if (req.method == 'POST') uploadItem(req, res);
       break;
-    case '/gallery.css':
+    case '/catalog.css':
       res.setHeader('Content-Type', 'text/css');
       res.end(stylesheet);
       break;
     default:
       if (req.url.includes('.jpg') || req.url.includes('.JPG') ||
           req.url.includes('.jpeg') || req.url.includes('.JPEG') ||
-          req.url.includes('.png')) serveImage(req.url, req, res);
+          req.url.includes('.png') || req.url.includes('.PNG') ||
+          req.url.includes('.svg') || req.url.includes('.SVG') ||
+          req.url.includes('.bmp') || req.url.includes('.BMP')) serveImage(req.url, req, res);
       else serveDetailedPage(req.url, req, res);
   }
 }
