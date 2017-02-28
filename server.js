@@ -113,7 +113,7 @@ function buildDetailedPage(jsonItem) {
   return template.render('detailedPage.html', {
     name: jsonItem.name,
     description: jsonItem.description,
-    imageTag: `<img class="item-image" src="${jsonItem.image}" alt="${jsonItem.image}">`
+    imageTag: `<img class="item-image-detailed" src="${jsonItem.image}" alt="${jsonItem.image}">`
   });
 }
 

@@ -27,4 +27,10 @@ img {
   padding: 10px;
 }
 
+.item-image-detailed {
+  width: 500px;
+  height: auto;
+  padding: 10px;
+}
+
 /*media query to center single column*/
