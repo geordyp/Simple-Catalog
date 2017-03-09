@@ -226,5 +226,5 @@ function handleRequest(req, res) {
 /* Create and launch the webserver */
 var server = http.createServer(handleRequest);
 server.listen(port, function() {
-  console.log("Server is listening on port ", port);
+  console.log("Server is listening on localhost:" + port + "/catalog");
 });
