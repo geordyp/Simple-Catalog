@@ -216,7 +216,8 @@ function handleRequest(req, res) {
           req.url.includes('.jpeg') || req.url.includes('.JPEG') ||
           req.url.includes('.png') || req.url.includes('.PNG') ||
           req.url.includes('.svg') || req.url.includes('.SVG') ||
-          req.url.includes('.bmp') || req.url.includes('.BMP')) serveImage(req.url, req, res);
+          req.url.includes('.bmp') || req.url.includes('.BMP') ||
+          req.url.includes('.ico')) serveImage(req.url, req, res);
       else serveDetailedPage(req.url, req, res);
   }
 }
